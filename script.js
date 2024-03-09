@@ -131,11 +131,10 @@ function init() {
   addLayer(0, 0, 12, 12);
 
   //First Layer
-
   addLayer(0, 0, originalBoxSize, originalBoxSize);
 
-  //First Layer
-  addLayer(-10, 0, originalBoxSize, originalBoxSize, "x");
+  //Second Layer
+  addLayer(-5, 0, originalBoxSize, originalBoxSize, "x");
 
   //Adding Stars
   const particleGeometry = new THREE.BufferGeometry();
@@ -324,10 +323,13 @@ function startGame() {
       const overHangDepth = direction == "z" ? overHangSize : newDepth;
 
       addOverHang(overHangX, overHangZ, overHangWidth, overHangDepth);
+
       //Next Layer
-      const nextX = direction === "x" ? topLayer.threejs.position.x : -10;
-      const nextZ = direction === "z" ? topLayer.threejs.position.z : -10;
+      const nextX = direction === "x" ? topLayer.threejs.position.x : -5;
+
+      const nextZ = direction === "z" ? topLayer.threejs.position.z : -5;
       const nextDirection = direction === "x" ? "z" : "x";
+
       addLayer(nextX, nextZ, newWidth, newDepth, nextDirection);
 
       if (newScore == 10) {
@@ -380,8 +382,10 @@ function addOverHang(x, z, width, depth) {
   overhangStack.push(overHang);
 }
 
+let directionChange = 1;
+
 function animation() {
-  let speed = 0.8;
+  let speed = 10 + (stack.length - 2) * 0.01;
 
   const deltaTime = clock.getDelta();
   const elapsedTime = clock.getElapsedTime();
@@ -391,10 +395,30 @@ function animation() {
 
   const topLayer = stack[stack.length - 1];
 
-  topLayer.threejs.position[topLayer.direction] =
-    Math.cos(elapsedTime * speed) * -10;
-  topLayer.cannonjs.position[topLayer.direction] =
-    Math.cos(elapsedTime * speed) * -10;
+  // topLayer.threejs.position[topLayer.direction] =
+  //   Math.sin(1 * elapsedTime * speed) * 5;
+  // topLayer.cannonjs.position[topLayer.direction] =
+  //   Math.sin(1 * elapsedTime * speed) * 5;
+
+  if (topLayer.direction == "x") {
+    if (topLayer.threejs.position.x > 5) {
+      directionChange = -1;
+    } else if (topLayer.threejs.position.x < -5) {
+      directionChange = 1;
+    }
+  } else if (topLayer.direction == "z") {
+    if (topLayer.threejs.position.z > 5) {
+      directionChange = -1;
+    } else if (topLayer.threejs.position.z < -5) {
+      directionChange = 1;
+    }
+  }
+
+  topLayer.threejs.position[topLayer.direction] +=
+    speed * delta * directionChange;
+
+  topLayer.cannonjs.position[topLayer.direction] +=
+    speed * delta * directionChange;
 
   world.step(1 / 60, delta, 3);
   overhangStack.forEach((element) => {
@@ -417,7 +441,7 @@ function animation() {
   renderer.render(scene, camera);
 }
 
-// Eventlisteners
+//! Eventlisteners
 
 // window.addEventListener("click", startGame);
 canvas.addEventListener("click", startGame);
